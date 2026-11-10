@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: "export",
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -11,6 +12,12 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "mahalaxmiinfra.in", pathname: "/images/**"},
+    ],
+    unoptimized: true,
   },
 };
 
