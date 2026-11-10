@@ -9,8 +9,6 @@ import { events, getEventBySlug } from "@/data/events";
 
 type Params = { params: Promise<{ slug: string }> };
 
-export const instant = false;
-
 export function generateStaticParams() {
   return events.map((e) => ({ slug: e.slug }));
 }

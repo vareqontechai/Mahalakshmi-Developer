@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { projects } from "@/data/projects";
 import { site } from "@/data/site";
-import { EMAIL_REGEX, PHONE_REGEX, type Lead } from "@/lib/enquiry";
+import { EMAIL_REGEX, PHONE_REGEX, whatsappLink, type Lead } from "@/lib/enquiry";
 import EnquirySuccess from "@/components/enquiry/EnquirySuccess";
 
 type Status = "idle" | "submitting" | "success" | "error";
@@ -18,47 +18,40 @@ export default function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Errors>({});
   const [lead, setLead] = useState<Lead | null>(null);
-  const [delivered, setDelivered] = useState(true);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const d = new FormData(e.currentTarget);
-    const name = String(d.get("name") ?? "").trim();
-    const phone = String(d.get("phone") ?? "").replace(/[\s-]/g, "");
-    const email = String(d.get("email") ?? "").trim();
-    const project = String(d.get("project") ?? "");
-    const message = String(d.get("message") ?? "").trim();
-    const website = String(d.get("website") ?? ""); // honeypot
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  e.preventDefault();
+  const d = new FormData(e.currentTarget);
+  const name = String(d.get("name") ?? "").trim();
+  const phone = String(d.get("phone") ?? "").replace(/[\s-]/g, "");
+  const email = String(d.get("email") ?? "").trim();
+  const project = String(d.get("project") ?? "");
+  const message = String(d.get("message") ?? "").trim();
+  const website = String(d.get("website") ?? ""); // honeypot
 
-    const next: Errors = {};
-    if (name.length < 2) next.name = "Please enter your name";
-    if (!PHONE_REGEX.test(phone)) next.phone = "Enter a valid 10-digit mobile number";
-    if (email && !EMAIL_REGEX.test(email)) next.email = "Enter a valid email address";
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+  const next: Errors = {};
+  if (name.length < 2) next.name = "Please enter your name";
+  if (!PHONE_REGEX.test(phone)) next.phone = "Enter a valid 10-digit mobile number";
+  if (email && !EMAIL_REGEX.test(email)) next.email = "Enter a valid email address";
+  setErrors(next);
+  if (Object.keys(next).length > 0 || website) return;
 
-    setStatus("submitting");
-    try {
-      const res = await fetch("/api/enquiry", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, email, project, message, website, source: "contact page" }),
-      });
-      if (!res.ok) throw new Error("Request failed");
-      const data = await res.json();
-      setLead({ name, phone, email, project, message, source: "contact page" });
-      setDelivered(Boolean(data.delivered));
-      setStatus("success");
-    } catch {
-      setStatus("error");
-    }
-  }
+  const newLead: Lead = {
+    name,
+    phone,
+    email: email || undefined,
+    project: project || undefined,
+    message: message || undefined,
+  };
+  window.open(whatsappLink(newLead), "_blank", "noopener,noreferrer");
+  setLead(newLead);
+  setStatus("success");
+}
 
   if (status === "success" && lead) {
     return (
       <EnquirySuccess
         lead={lead}
-        delivered={delivered}
         closeLabel="Send another enquiry"
         onClose={() => {
           setLead(null);
@@ -124,7 +117,7 @@ export default function ContactForm() {
         className="flex w-full items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 text-sm font-semibold text-white transition hover:bg-gold-dark disabled:opacity-70 sm:w-auto sm:px-10"
       >
         {status === "submitting" && <Loader2 size={16} className="animate-spin" />}
-        {status === "submitting" ? "Sending..." : "Send Enquiry"}
+        {status === "submitting" ? "Sending..." : "Send on WhatsApp"}
       </button>
 
       <p className="text-xs text-neutral-500">
